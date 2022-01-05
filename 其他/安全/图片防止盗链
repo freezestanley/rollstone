@@ -1,0 +1,35 @@
+> 图片请求头
+     referrer 和 host
+    当判断页面来源于请求host不匹配的时候
+    服务端返回防盗图片
+```
+const getHostName = function (str) {
+  let { hostname } = url.parse(str)
+  return hostname
+}
+http.createServer((req, res) => {
+  let refer = req.headers['referer'] || req.headers['referrer']
+  let { pathname } = url.parse(req.url)
+  let src = path.join(__dirname, 'public', '.'+ pathname)
+  fs.stat(src, err => { // 先判断文件不存在
+    if(!err) {
+      if(refer){
+        let referHost = getHostName(refer)
+        let host = req.headers['host'].split(':')[0]
+        if (referHost !== host)
+        fs.createReadStream(path.join(__dirname, 'public', './1.jpg'))
+      }
+    }
+  })
+})
+```
+同源指的是两个请求接口URL的协议（protocol）、域名（host）和端口（port）一致。
+![avatar](https://github.com/freezestanley/rollstone/blob/main/%E5%85%B6%E4%BB%96/diff/a.jpg)
+
+XSS指的是恶意攻击者往Web页面里插入恶意HTML代码，利用的是用户对指定网站的信任。
+
+CSFR指的是跨站请求伪造，是攻击者通过一些技术手段欺骗用户的浏览器去访问一个自己曾经认证过的网站并执行一些操作（如发邮件，发消息，甚至财产操作如转账和购买商品）。
+由于浏览器曾经认证过，所以被访问的网站会认为是真正的用户操作而去执行。这利用了Web中用户身份验证的一个漏洞：简单的身份验证只能保证请求是发自某个用户的浏览器，却不能保证请求本身是用户自愿发出的。这实际上利用的是网站对用户网页浏览器的信任。
+所以根据浏览器的是否同源判定，可以有选择的限制网站的一些行为。比如非同源的站点会被限制访问cookie、localStorage以及IndexDB，同时也无法获取网页DOM以及JavaScript对象，甚至AJAX的请求也会被拦截。
+
+跨域问题
