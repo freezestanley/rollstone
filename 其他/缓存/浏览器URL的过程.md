@@ -56,3 +56,48 @@ Etag 就像一个指纹，资源变化都会导致 ETag 变化，跟最后修改
 If-None-Match 的 header 会将上次返回的 ETag 发送给服务器，询问该资源的 ETag 是否有更新，有变动就会发送新的资源回来
 ETag(If-None-Match)的优先级高于 Last-Modified(If-Modified-Since)，优先使用 ETag 进行确认。
 协商缓存比强缓存稍慢，因为还是会发送请求到服务器进行确认。
+
+CDN
+CDN 会把源站的资源缓存到 CDN 服务器，当用户访问的时候就会从最近的 CDN 服务器拿取资源而不是从源站拿取，这样做的好处是分散了压力，同时也会提升返回访问速度和稳定性。
+
+页面渲染
+
+![avatar](https://github.com/freezestanley/rollstone/blob/main/%E5%85%B6%E4%BB%96/diff/b.jpg)
+
+关键渲染路径是浏览器将 HTML/CSS/JS 转换为屏幕上看到的像素内容所经过的一系列步骤。
+浏览器得到 HTML 后会开始解析 DOM 树，CSS 资源的下载不会阻塞解析 DOM，但是也要注意，如果 CSS 未下载解析完成是会阻塞最终渲染的。
+
+预加载/预连接内容
+和前面说的 DNS 预查询一样，可以将即将要用到的资源或者即将要握手的地址提前告知浏览器让浏览器利用还在解析 HTML 计算样式的时间去提前准备好。
+preload
+使用 link 的 preload 属性预加载一个资源。
+
+<link rel="preload" href="style.css" as="style">
+复制代码
+as属性可以指定预加载的类型，除了style还支持很多类型，常用的一般是style和script，css和js。
+其他的类型可以查看文档:
+
+prefetch
+prefetch 和 preload 差不多，prefetch 是一个低优先级的获取，通常用在这个资源可能会在用户接下来访问的页面中出现的时候。
+当然对当前页面的要用 preload，不要用 prefetch，可以用到的一个场景是在用户鼠标移入 a 标签时进行一个 prefetch。
+
+preconnect
+preconnect 和 dns-prefetch 做的事情类似，提前进行 TCP，SSL 握手，省去这一部分时间，基于 HTTP1.1(keep-alive)和 HTTP2(多路复用)的特性，都会在同一个 TCP 链接内完成接下来的传输任务。
+
+script 加标记
+
+async 标记
+
+<script src="main.js" async>
+async标记告诉浏览器在等待js下载期间可以去干其他事，当js下载完成后会立即(尽快)执行，多条js可以并行下载。
+async的好处是让多条js不会互相等待，下载期间浏览器会去干其他事(继续解析HTML等)，异步下载，异步执行。
+defer标记
+<script src="main.js" defer></script>
+
+与 async 一样，defer 标记告诉浏览器在等待 js 下载期间可以去干其他事，多条 js 可以并行下载，不过当 js 下载完成之后不会立即执行，而是会等待解析完整个 HTML 之后在开始执行，而且多条 defer 标记的 js 会按照顺序执行，
+
+<script src="main.js" defer></script>
+<script src="main2.js" defer></script>
+
+复制代码
+即使 main2.js 先于 main.js 下载完成也会等待 main.js 执行完后再执行。
