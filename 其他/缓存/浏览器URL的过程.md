@@ -14,3 +14,6 @@ server {
  listen 443 ssl http2; #  加一句  http2.
  server_name domain.com;
 }
+缓存
+HTTP 缓存主要分为两种，一种是强缓存，另一种是协商缓存，都通过 Headers 控制。
+![avatar](https://github.com/freezestanley/rollstone/blob/main/%E5%85%B6%E4%BB%96/缓存/a.jpg)
