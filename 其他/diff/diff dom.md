@@ -1,2 +1,1 @@
-> aaaa
-> ![avatar](/a.jpg)
+![avatar](/a.jpg)
