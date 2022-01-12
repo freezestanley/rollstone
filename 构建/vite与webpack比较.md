@@ -58,3 +58,10 @@ createApp(App).mount('#app')
 
 库用 rollup,项目用 webpack
 之前 tree-shaking 热更新
+
+跟 webpack 有些区别，rollup 不分 plugin 和 loader，只通过 plugin 来实现插件。主要流程如下：
+1、创建 rollup 插件;
+2、通过 rollup 的 acorn 插件将 code 转为 ast 语法树;
+3、通过 stack-utils 插件将当前文件/文件名行数等信息添加到 err 里;
+3、通过 estree-walker 遍历语法树，将相关的语句(函数)增加 wrap 节点；
+4、通过 escodegen 插件将语法树转为 code;
