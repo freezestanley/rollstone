@@ -16,7 +16,8 @@
 ![avatar](https://github.com/freezestanley/rollstone/blob/main/%E6%9E%84%E5%BB%BA/a.png)
 
 > webpack
-> ![avatar](https://github.com/freezestanley/rollstone/blob/main/%E6%9E%84%E5%BB%BA/b.png)
+
+![avatar](https://github.com/freezestanley/rollstone/blob/main/%E6%9E%84%E5%BB%BA/b.png)
 
 > vite 原理简述
 
