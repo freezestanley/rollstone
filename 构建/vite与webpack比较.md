@@ -13,10 +13,10 @@
 > 原理图示
 > Vite
 
-![avatar](https://github.com/freezestanley/rollstone/blob/main/%E6%9E%84%E5%BB%BA/vite%E4%B8%8Ewebpack%E6%AF%94%E8%BE%83/a.png)
+![avatar](https://github.com/freezestanley/rollstone/blob/main/%E6%9E%84%E5%BB%BA/a.png)
 
 > webpack
-> ![avatar](https://github.com/freezestanley/rollstone/blob/main/%E6%9E%84%E5%BB%BA/vite%E4%B8%8Ewebpack%E6%AF%94%E8%BE%83/b.png)
+> ![avatar](https://github.com/freezestanley/rollstone/blob/main/%E6%9E%84%E5%BB%BA/b.png)
 
 > vite 原理简述
 
