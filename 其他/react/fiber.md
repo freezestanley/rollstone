@@ -283,3 +283,46 @@ const List = React.memo(function List (props) {
 总结及 Concurrent Mode 的其他 Features
 当然我们举了很夸张的例子(深节点，移除重排重绘)来单独看 Concurrent Mode 模式下对于 render/reconcilation 带来的优化效果。当然分片只是 Fiber 的一小部分功能，Fiber 架构解锁了很多 Concurrent Mode 的新功能： <SuspenseList>, useTransition, useDeferredValue 等等，当然这些暂时是试用性的。 在我们的 demo 中，可以使用 useDeferredValue 来做 state 的延迟，比如我们轮训获取到了实时的长列表，但是又不想阻塞输入框等用户的操作，我们可以将旧的 state 用 useDeferredValue 暂时存起来，然后将旧版的 state 传给带 memo 的组件，这时候我们通过降低了列表的时效性来换取了用户交互体验的提升，而且我们原 state 永远是最新的，所以跟增大轮询时间又不太一样。
 总之，Concurrent Mode 解锁了很多新的功能，当然有些是试用性的，但是可以期待当 Concurrent Mode 正式使用的时候，新特性给性能和用户体验带来的提升。
+
+---
+
+Fiber 的前任： Stack Reconciler
+Stack Reconciler（下文将简称为 Stack）作为 Fiber 的前任调度器，就像它的名字一样，通过栈的方式实现任务的调度：将不同任务（渲染变动）压入栈中，浏览器每次绘制的时候，将执行这个栈中已经存在的任务。
+
+说到这，Stack 的问题已经很明显的暴露出来了。我们知道设备刷新频率通常为 60Hz，如今支持高刷（120Hz+）的设备也在不断增加，页面每一帧所消耗掉的时间也在不断减少 1s/60↑ ≈ 16ms↓，在这段时间内，浏览器需要执行如下任务
+
+可用户并不关心上面的大部分流程，只需要页面可以及时的展示就足够了。如果我们在一次渲染时，向栈中推入了过多的任务，从而导致其执行时间超过浏览器的一帧，就会使这一帧没能及时响应渲染页面，也是就我们常说的掉帧。
+
+而 Stack 这种架构的特点就是，所有任务都按顺序的压入了栈中，而执行的时候无法确认当前的任务是否会耗去过长的脚本运行时间，使得这一帧时间内里浏览器能做的事不可控。
+
+所以可控便成了 React 团队的优化方向，Fiber Reconciler 应运而生。
+
+requestIdleCallback 方法插入一个函数，这个函数将在浏览器空闲时期被调用。这使开发者能够在主事件循环上执行后台和低优先级工作，而不会影响延迟关键事件。
+requestAnimationFrame
+requestAnimationFrame 比起 setTimeout、setInterval 的优势主要有两点：
+1、requestAnimationFrame 会把每一帧中的所有 DOM 操作集中起来，在一次重绘或回流中就完成，并且重绘或回流的时间间隔紧紧跟随浏览器的刷新频率，一般来说，这个频率为每秒 60 帧。
+2、在隐藏或不可见的元素中，requestAnimationFrame 将不会进行重绘或回流，这当然就意味着更少的的 cpu，gpu 和内存使用量。
+
+```
+rafId = requestAnimationFrame(animloop)
+cancelAnimationFrame(rafId)
+```
+
+![avatar](https://github.com/freezestanley/rollstone/blob/main/%E5%85%B6%E4%BB%96/react/q.png)
+
+在 19 年的一次更新中，React 团队推翻之前的设计，使用了 MessageChannel 来实现了对于线程控制。
+
+MessageChannel 允许我们创建一个新的消息通道，并通过它的两个 MessagePort 属性发送数据。此特性在 Web Worker 中可用。其使用方式如下：
+
+```
+const channel = new MessageChannel()
+
+channel.port1.onmessage = function(msgEvent) {
+  console.log('recieve message!')
+}
+
+channel.port2.postMessage(null)
+```
+
+// output: recieve message!
+React 开发成员对这次更新这样说道：requestAnimationFrame 过于依赖硬件设备，无法在其之上进一步减少任务调度频率，以获得更大的优化空间。使用高频（5ms）少量的消息事件进行任务调度，虽然会加剧主线程与其他浏览器任务的争用，但却值得一试。
