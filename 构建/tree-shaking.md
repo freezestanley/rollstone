@@ -1,4 +1,27 @@
 # Tree shaking
+sideEffects 和 usedExports（更多被认为是 tree shaking）是两种不同的优化方式
+sideEffects 更为有效 是因为它允许跳过整个模块/文件和整个文件子树
+
+usedExports 依赖于 terser 去检测语句中的副作用。它是一个 JavaScript 任务而且没有像 sideEffects 一样简单直接。而且它不能跳转子树/依赖由于细则中说副作用需要被评估
+
+可以通过 /*#__PURE__*/ 注释来帮忙 terser。它给一个语句标记为没有副作用。就这样一个简单的改变就能够使下面的代码被 tree-shake:
+
+```
+var Button$1 = /*#__PURE__*/ withAppProvider()(Button);
+```
+
+可以告诉 webpack 一个函数调用是无副作用的，只要通过 /*#__PURE__*/ 注释。它可以被放到函数调用之前，用来标记它们是无副作用的(pure)
+
+package.json 的 "sideEffects" 属性
+```
+{
+  "name": "your-project",
+  "sideEffects": false,
+  "sideEffects": ["./src/some-side-effectful-file.js"]
+}
+```
+
+
 “Tree shaking 是一种通过清除多余代码方式来优化项目打包体积的技术，专业术语叫 Dead code elimination
 
 在ES6以前，我们可以使用CommonJS引入模块：require()，这种引入是动态的，也意味着我们可以基于条件来导入需要的代码：

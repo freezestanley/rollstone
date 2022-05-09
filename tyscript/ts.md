@@ -110,3 +110,4 @@ value[0][1]; // Error
 let tupleType: [string, boolean];
 tupleType = ["Semlinker", true];
 ```
+

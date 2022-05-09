@@ -65,3 +65,20 @@ createApp(App).mount('#app')
 3、通过 stack-utils 插件将当前文件/文件名行数等信息添加到 err 里;
 3、通过 estree-walker 遍历语法树，将相关的语句(函数)增加 wrap 节点；
 4、通过 escodegen 插件将语法树转为 code;
+
+
+# vite
+
+一个基于浏览器原生 ES Modules 的开发服务器。利用浏览器去解析模块，在服务器端按需编译返回，完全跳过了打包这个概念，服务器随起随用。同时不仅有 Vue 文件支持，还搞定了热更新，而且热更新的速度不会随着模块增多而变慢
+
+理论上讲 Vite 是ES module 实现的。随着项目的增大启动时间也不会因此增加。而 webpack 随着代码体积的增加启动时间是要明显增加的
+
+# 静态资源(statics & asset & JSON )的加载
+当请求的路径符合 imageRE, mediaRE, fontsRE 或 JSON 格式，会被认为是一个静态资源。静态资源将处理成 ES Module 模块返回
+
+# 请求拦截原理
+Vite 的基本实现原理，就是启动一个 koa 服务器拦截由浏览器请求 ES Module 的请求。通过请求的路径找到目录下对应的文件做一定的处理最终以 ES Modules 格式返回给客户端
+
+# 热更新(Hot Module Replacement)原理
+
+Vite 的热加载原理，其实就是在客户端与服务端建立了一个 websocket 连接，当代码被修改时，服务端发送消息通知客户端去请求修改模块的代码，完成热更新

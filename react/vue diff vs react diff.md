@@ -326,3 +326,47 @@ add() {
 ![avatar](https://github.com/freezestanley/rollstone/blob/main/react/640_13.png)
 
 
+在进行子节点的 diff算法 过程中，会进行 旧首节点和新首节点的sameNode对比，这一步命中了逻辑，因为现在新旧两次首部节点 的 key 都是 0了，同理，key为1和2的也是命中了逻辑，导致相同key的节点会去进行patchVnode更新文本，而原本就有的c节点，却因为之前没有key为4的节点，而被当做了新节点，所以很搞笑，使用index做key，最后新增的居然是本来就已有的c节点。所以前三个都进行patchVnode更新文本，最后一个进行了新增，那就解释了为什么所有li标签都更新了。
+
+![avatar](https://github.com/freezestanley/rollstone/blob/main/react/640_14.png)
+
+那我们可以怎么解决呢？其实我们只要使用一个独一无二的值来当做key就行了
+```
+<ul>
+   <li v-for="item in list" :key="item.id">{{ item.title }}</li>
+</ul>
+```
+
+为什么用了id来当做key就实现了我们的理想效果呢，因为这么做的话，a，b，c节点的key就会是永远不变的，更新前后key都是一样的，并且又由于a，b，c节点的内容本来就没变，所以就算是进行了patchVnode，也不会执行里面复杂的更新操作，节省了性能，而林三心节点，由于更新前没有他的key所对应的节点，所以他被当做新的节点，增加到真实DOM上去了
+
+![avatar](https://github.com/freezestanley/rollstone/blob/main/react/640_15.png)
+
+# 总结VUE Diff算法 https://mp.weixin.qq.com/s/S4S0wiRIiWO2PxGweIpCrA
+
+1.虚拟DOM一定比dom操作快 这个是不严谨的
+2.虚拟DOM其实是在内存中以数据形式描述的
+3.diff原理
+1）Diff算法比较只会在同层级进行, 不会跨层级比较。所以Diff算法是:广度优先算法。 时间复杂度:O(n) react 是深度优先
+2）会触发setter，并且通过Dep.notify去通知所有订阅者Watcher，订阅者们就会调用patch方法，给真实DOM打补丁，更新相应的视图
+3）patch方法内 newVnode 和 oldVnode对比
+4）sameVnode 对比 key tagname data 进行比较
+5）在updateChildren方法内 
+  采用首尾指针法（S开头E结尾）
+1、oldS 和 newS使用sameVnode方法进行比较，sameVnode(oldS, newS)
+2、oldS 和 newE使用sameVnode方法进行比较，sameVnode(oldS, newE)
+3、oldE 和 newS使用sameVnode方法进行比较，sameVnode(oldE, newS)
+4、oldE 和 newE使用sameVnode方法进行比较，sameVnode(oldE, newE)
+5、如果以上逻辑都匹配不到，再把所有旧子节点的 key 做一个映射到旧节点下标的 key -> index 表，然后用新 vnode 的 key 去找出在旧节点中可以复用的位置
+6）vue在发生变更的时候知道所变化的组件节点 不需要遍历
+
+# 用index做key
+平常v-for循环渲染的时候，为什么不建议用index作为循环项的key呢？
+进行子节点的 diff算法 过程中，会进行 旧首节点和新首节点的sameNode对比，
+这一步命中了逻辑，
+因为现在新旧两次首部节点 的 key 都是 0了，
+同理，key为1和2的也是命中了逻辑，导致相同key的节点会去进行patchVnode更新文本，
+而原本就有的c节点，却因为之前没有key为4的节点，而被当做了新节点，所以很搞笑，
+使用index做key，最后新增的居然是本来就已有的c节点。
+所以前三个都进行patchVnode更新文本，最后一个进行了新增，那就解释了为什么所有li标签都更新了
+
+

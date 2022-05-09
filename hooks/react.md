@@ -133,3 +133,183 @@ export default Teach
 无论是 render 还是 re-render ， Hooks 调用顺序必须是一致的；
 如果 Hooks 出现在循环、判断里，则无法保证顺序一致；
 Hooks 严重依赖于调用顺序！重要！
+
+
+```
+const App = () => {
+  const [temp, setTemp] = React.useState(5);
+
+  const log = () => {
+    setTimeout(() => {
+      console.log("3 秒前 temp = 5，现在 temp =", temp);
+    }, 3000);
+  };
+
+  return (
+    <div
+      onClick={() => {
+        log();
+        setTemp(3);
+        // 3 秒前 temp = 5，现在 temp = 5
+      }}
+    >
+      xyz
+    </div>
+  );
+};
+
+```
+temp 输出为5
+在 log 函数执行的那个 Render 过程里，temp 的值可以看作常量 5，执行 setTemp(3) 时会交由一个全新的 Render 渲染，所以不会执行 log 函数。而 3 秒后执行的内容是由 temp 为 5 的那个 Render 发出的，所以结果自然为 5
+
+可以认为 ref 在所有 Render 过程中保持着唯一引用，因此所有对 ref 的赋值或取值，拿到的都只有一个最终状态，而不会在每个 Render 间存在隔离
+
+```
+function Example() {
+  const [count, setCount] = useState(0);
+  const latestCount = useRef(count);
+
+  useEffect(() => {
+    // Set the mutable latest value
+    latestCount.current = count;
+    setTimeout(() => {
+      // Read the mutable latest value
+      console.log(`You clicked ${latestCount.current} times`);
+    }, 3000);
+  });
+  // ...
+}
+```
+也可以简洁的认为，ref 是 Mutable 的，而 state 是 Immutable 的。
+
+虽然 React 在 DOM 渲染时会 diff 内容，只对改变部分进行修改，而不是整体替换，但却做不到对 Effect 的增量修改识别。因此需要开发者通过 useEffect 的第二个参数告诉 React 用到了哪些外部变量
+
+```
+function Counter() {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setCount(count + 1);
+    }, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  return <h1>{count}</h1>;
+}
+```
+“组件初始化执行一次 setInterval，销毁时执行一次 clearInterval，这样的代码符合预期。” 你心里可能这么想。
+但是你错了，由于 useEffect 符合 Capture Value 的特性，拿到的 count 值永远是初始化的 0。相当于 setInterval 永远在 count 为 0 的 Scope 中执行，你后续的 setCount 操作并不会产生任何作用
+```
+useEffect(() => {
+  const id = setInterval(() => {
+    setCount(c => c + 1);
+  }, 1000);
+  return () => clearInterval(id);
+}, []);
+```
+setCount 还有一种函数回调模式，你不需要关心当前值是什么，只要对 “旧的值” 进行修改即可。这样虽然代码永远运行在第一次 Render 中，但总是可以访问到最新的 state。
+
+# 将更新与动作解耦
+
+你可能发现了，上面投机取巧的方式并没有彻底解决所有场景的问题，比如同时依赖了两个 state 的情况：
+```
+useEffect(() => {
+  const id = setInterval(() => {
+    setCount(c => c + step);
+  }, 1000);
+  return () => clearInterval(id);
+}, [step]);
+```
+你会发现不得不依赖 step 这个变量，我们又回到了 “诚实的代价” 那一章。当然 Dan 一定会给我们解法的。
+
+利用 useEffect 的兄弟 useReducer 函数，将更新与动作解耦就可以了：
+
+```
+const [state, dispatch] = useReducer(reducer, initialState);
+const { count, step } = state;
+
+useEffect(() => {
+  const id = setInterval(() => {
+    dispatch({ type: "tick" }); // Instead of setCount(c => c + step);
+  }, 1000);
+  return () => clearInterval(id);
+}, [dispatch]);
+```
+这就是一个局部 “Redux”，由于更新变成了 dispatch({ type: "tick" }) 所以不管更新时需要依赖多少变量，在调用更新的动作里都不需要依赖任何变量。 具体更新操作在 reducer 函数里写就可以了
+
+```
+import React, { useReducer, useEffect } from "react";
+import ReactDOM from "react-dom";
+
+function Counter() {
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const { count, step } = state;
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      dispatch({ type: 'tick' });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [dispatch]);
+
+  return (
+    <>
+      <h1>{count}</h1>
+      <input value={step} onChange={e => {
+        dispatch({
+          type: 'step',
+          step: Number(e.target.value)
+        });
+      }} />
+    </>
+  );
+}
+
+const initialState = {
+  count: 0,
+  step: 1,
+};
+
+function reducer(state, action) {
+  const { count, step } = state;
+  if (action.type === 'tick') {
+    return { count: count + step, step };
+  } else if (action.type === 'step') {
+    return { count, step: action.step };
+  } else {
+    throw new Error();
+  }
+}
+
+const rootElement = document.getElementById("root");
+ReactDOM.render(<Counter />, rootElement);
+```
+
+如果非要把 Function 写在 Effect 外面呢？
+
+```
+function Parent() {
+  const [query, setQuery] = useState("react");
+
+  // ✅ Preserves identity until query changes
+  const fetchData = useCallback(() => {
+    const url = "https://hn.algolia.com/api/v1/search?query=" + query;
+    // ... Fetch data and return it ...
+  }, [query]); // ✅ Callback deps are OK
+
+  return <Child fetchData={fetchData} />;
+}
+
+function Child({ fetchData }) {
+  let [data, setData] = useState(null);
+
+  useEffect(() => {
+    fetchData().then(setData);
+  }, [fetchData]); // ✅ Effect deps are OK
+
+  // ...
+}
+```
+经过 useCallback 包装过的函数可以当作普通变量作为 useEffect 的依赖。useCallback 做的事情，就是在其依赖变化时，返回一个新的函数引用，触发 useEffect 的依赖变化，并激活其重新执行
+

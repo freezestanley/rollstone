@@ -1,6 +1,6 @@
-![avatar](https://github.com/freezestanley/rollstone/blob/main/%E5%85%B6%E4%BB%96/diff/a.jpg)
-![avatar](https://github.com/freezestanley/rollstone/blob/main/%E5%85%B6%E4%BB%96/diff/b.jpg)
-![avatar](https://github.com/freezestanley/rollstone/blob/main/%E5%85%B6%E4%BB%96/diff/c.jpg)
+![avatar](https://github.com/freezestanley/rollstone/blob/main/react/diff/a.jpg)
+![avatar](https://github.com/freezestanley/rollstone/blob/main/react/diff/b.jpg)
+![avatar](https://github.com/freezestanley/rollstone/blob/main/react/diff/c.jpg)
 1.react diff
 
 > 传统 diff 算法
@@ -44,7 +44,7 @@ updateChildren: function(nextNestedChildrenElements, transaction, context) {
 
 > 注意：在开发组件时，保持稳定的 DOM 结构会有助于性能的提升。例如，可以通过 CSS 隐藏或显示节点，而不是真的移除或添加 DOM 节点。
 
-![avatar](https://github.com/freezestanley/rollstone/blob/main/%E5%85%B6%E4%BB%96/diff/e.jpg)
+![avatar](https://github.com/freezestanley/rollstone/blob/main/react/diff/e.jpg)
 
 # component diff
 

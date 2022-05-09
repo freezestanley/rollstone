@@ -28,7 +28,7 @@ Content-Security-Policy: child-src 'none'
 转义字符
 3) HttpOnly Cookie。
 
-CSRF(Cross Site Request Forgery)，即跨站请求伪造，是一种常见的Web攻击，它利用用户已登录的身份，在用户毫不知情的情况下，以用户的名义完成非法操作
+# CSRF(Cross Site Request Forgery)，即跨站请求伪造，是一种常见的Web攻击，它利用用户已登录的身份，在用户毫不知情的情况下，以用户的名义完成非法操作
 完成 CSRF 攻击必须要有三个条件
 用户已经登录了站点 A，并在本地记录了 cookie
 
