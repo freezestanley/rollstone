@@ -1,3 +1,30 @@
+# Immutable数据流React性能优化
+
+Redux中的reducer是基于纯函数设计的，要求返回的状态数据(对象或数组)，需要先深拷贝一份（目的是：防止影响老状态）
+
+immutable数据一种利用结构共享形成的持久化数据结构，一旦有部分被修改，那么将会返回一个全新的对象，并且原来相同的节点会直接共享。
+每次修改一个 immutable 对象时都会创建一个新的不可变的对象，在新对象上操作并 不会影响到原对象的数据。
+具体点来说，immutable 对象数据内部采用是多叉树的结构，凡是有节点被改变，那么它和与它相关的所有上级节点都更新
+
+采用 immutable 既能够最大效率地更新数据结构，又能够和现有的 React中的 PureComponent (memo) 顺利对接，感知到状态的变化，是提高 React 渲染性能的极佳方案
+
+与React中的 PureComponent(memo) 相结合，我们知道PureComponent能够在内部帮我们比较新props跟旧props，新state和旧state，如果值相等或者对象含有的相同的属性、且属性值相等，便确定shouldComponentUpdate返回true或者false，从而判断是否再次渲染render函数。
+看上述代码，我们可以看出来，当代码中使用immutable第三库的时候，可以精确地深拷贝 a 对象，改a对象中的select属性赋值给b之后，并不会影响原对象a，而b的select属性变为了新值。
+如果上述select属性给一个组件用，因为其值被改变了，导致shouldComponentUpdate应该返回true，而filter属性给另一个组件用，通过判断，并无变化，导致shouldComponentUpdate应该返回false，故此组件就避免了重复的diff算法对比，大大提高了React中的性能优化。
+
+
+# immutable优化性能的方式
+
+immutable实现的原理是：持久化数据结构，也就是使用旧数据创建新数据时，要保证旧数据同时可用且不变。同时为了避免deepCopy 把所有节点都复制一遍带来的性能损耗。
+immutable使用了结构共享，即如果对象树中一个节点发生变化，只修改这个节点和受它影响的父节点，其它节点则进行共享。
+
+
+
+
+
+
+----------------------
+
 Immer 包暴露了一个完成所有工作的默认函数
 
 produce(currentState, recipe: (draftState) => void): nextState

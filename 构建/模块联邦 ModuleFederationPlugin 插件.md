@@ -65,3 +65,17 @@ init：host通过该函数将依赖注入remote中
 首先，mf会让webpack以filename作为文件名生成文件
 其次，文件中以var的形式暴露了一个名为name的全局变量，其中包含了exposes以及shared中配置的内容
 最后，作为host时，先通过remote的init方法将自身shared写入remote中，再通过get获取remote中expose的组件，而作为remote时，判断host中是否有可用的共享依赖，若有，则加载host的这部分依赖，若无，则加载自身依赖。
+
+mf 的核心 require_ensure 他是异步加载的chunk
+
+即host和remote的shared的模块的版本是一样时，host不会使用自己的模块，而是反而使用了remote的模块。
+
+这个现象源自webpack对于共享模块的处理方式：
+
+host先初始化自己的shared-scope
+host加载remote，remote基于host的shared-scope初始化自己的shared-scope
+host开始从shared-scope中加载shared module
+如果模块的版本是一样的，在第二步中remote会将host之前设置过的同版本的module给覆盖掉，进而导致host尝试从中读取module时，会读到remote的module。
+
+
+https://zhuanlan.zhihu.com/p/352936804

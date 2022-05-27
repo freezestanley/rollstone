@@ -101,3 +101,13 @@ defer标记
 
 复制代码
 即使 main2.js 先于 main.js 下载完成也会等待 main.js 执行完后再执行。
+
+ush Cache（推送缓存）是 HTTP/2 中的内容，当以上三种缓存都没有命中时，它才会被使用。它只在会话（Session）中存在，一旦会话结束就被释放，并且缓存时间也很短暂，在Chrome浏览器中只有5分钟左右，同时它也并非严格执行HTTP头中的缓存指令。
+
+Push Cache 在国内能够查到的资料很少，也是因为 HTTP/2 在国内不够普及。这里推荐阅读Jake Archibald的 HTTP/2 push is tougher than I thought 这篇文章，文章中的几个结论： - 所有的资源都能被推送，并且能够被缓存,但是 Edge 和 Safari 浏览器支持相对比较差 - 可以推送 no-cache 和 no-store 的资源 - 一旦连接被关闭，Push Cache 就被释放 - 多个页面可以使用同一个HTTP/2的连接，也就可以使用同一个Push Cache。这主要还是依赖浏览器的实现而定，出于对性能的考虑，有的浏览器会对相同域名但不同的tab标签使用同一个HTTP连接。 - Push Cache 中的缓存只能被使用一次 - 浏览器可以拒绝接受已经存在的资源推送 - 你可以给其他域名推送资源
+
+# x-dns-prefetch-control
+通过 HTTPS 加载的页面上内嵌链接的域名并不会执行预加载
+<meta http-equiv="x-dns-prefetch-control" content="on">
+<link rel="dns-prefetch" href="//www.spreadfirefox.com">
+<link rel="preload" as="font">
